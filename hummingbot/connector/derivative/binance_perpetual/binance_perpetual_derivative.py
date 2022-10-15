@@ -25,8 +25,7 @@ from hummingbot.connector.derivative.binance_perpetual.binance_perpetual_user_st
 )
 from hummingbot.connector.derivative.perpetual_budget_checker import PerpetualBudgetChecker
 from hummingbot.connector.derivative.position import Position
-from hummingbot.connector.exchange_base import ExchangeBase, s_decimal_NaN
-from hummingbot.connector.perpetual_trading import PerpetualTrading
+from hummingbot.connector.perpetual_derivative_py_base import PerpetualDerivativePyBase
 from hummingbot.connector.time_synchronizer import TimeSynchronizer
 from hummingbot.connector.trading_rule import TradingRule
 from hummingbot.connector.utils import combine_to_hb_trading_pair, get_new_client_order_id
@@ -55,10 +54,13 @@ from hummingbot.logger import HummingbotLogger
 if TYPE_CHECKING:
     from hummingbot.client.config.config_helpers import ClientConfigAdapter
 
+s_decimal_NaN = Decimal("nan")
+s_decimal_0 = Decimal(0)
+
 bpm_logger = None
 
 
-class BinancePerpetualDerivative(ExchangeBase, PerpetualTrading):
+class BinancePerpetualDerivative(PerpetualDerivativePyBase):
     MARKET_FUNDING_PAYMENT_COMPLETED_EVENT_TAG = MarketEvent.FundingPaymentCompleted
 
     API_CALL_TIMEOUT = 10.0
@@ -100,8 +102,8 @@ class BinancePerpetualDerivative(ExchangeBase, PerpetualTrading):
         self._rest_assistant: Optional[RESTAssistant] = None
         self._ws_assistant: Optional[WSAssistant] = None
 
-        ExchangeBase.__init__(self, client_config_map=client_config_map)
-        PerpetualTrading.__init__(self, self._trading_pairs)
+        PerpetualDerivativePyBase.__init__(self, client_config_map=client_config_map)
+        PerpetualDerivativePyBase.__init__(self, self._perpetual_trading)
 
         self._user_stream_tracker = UserStreamTracker(
             data_source=BinancePerpetualUserStreamDataSource(
@@ -365,7 +367,7 @@ class BinancePerpetualDerivative(ExchangeBase, PerpetualTrading):
         return client_order_id
 
     def quantize_order_amount(self, trading_pair: str, amount: object, price: object = Decimal(0)):
-        quantized_amount = ExchangeBase.quantize_order_amount(self, trading_pair, amount)
+        quantized_amount = self.quantize_order_amount(self, trading_pair, amount)
         return quantized_amount
 
     def get_order_price_quantum(self, trading_pair: str, price: object):
